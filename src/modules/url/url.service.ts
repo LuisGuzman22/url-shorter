@@ -1,13 +1,41 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { UrlProcessorService } from 'src/services/url-processor/url-processor.service';
 
 @Injectable()
 export class UrlService {
-  constructor(private readonly urlProcessorService: UrlProcessorService) {}
-  shortener(urlList: String[]): String[] {
-    if (!urlList || urlList.length === 0)
-      throw new BadRequestException('urlList is required');
+  private readonly logger = new Logger(UrlService.name);
 
+  constructor(private readonly urlProcessorService: UrlProcessorService) {}
+  public shortener(urlList: String[]): String[] {
+    this.logger.log('shortening url list');
+    if (!urlList || urlList.length === 0) {
+      this.logger.error('urlList is required');
+      throw new BadRequestException('urlList is required');
+    }
     return this.urlProcessorService.shortener(urlList);
+  }
+
+  public async restoreUrl(key: string, res: any): Promise<void> {
+    this.logger.log('restoring url');
+    const longUrl = await this.urlProcessorService
+      .restoreUrl(key)
+      .then((url) => {
+        return url;
+      });
+    if (!longUrl) {
+      this.logger.error('key not found');
+      throw new NotFoundException('key not found');
+    }
+    res.redirect(longUrl);
+  }
+
+  public async deleteUrl(key: string): Promise<void> {
+    this.logger.log('deleting url');
+    await this.urlProcessorService.deleteUrl(key);
   }
 }

@@ -9,13 +9,17 @@ export class UrlProcessorService {
     private readonly cacheService: CacheService,
   ) {}
   public shortener(urlList: String[]): String[] {
-    const urlShorterList: String[] = [];
-    urlList.forEach((url: string) => {
-      const id = this.generateUUID();
-      urlShorterList.push(id);
-      this.saveCache(id, url);
+    return urlList.map((url: string) => {
+      return this.mapUrlToId(url);
     });
-    return urlShorterList;
+  }
+
+  public restoreUrl(key: string): Promise<string> {
+    return this.cacheService.getValue(key);
+  }
+
+  public deleteUrl(key: string): Promise<void> {
+    return this.cacheService.deleteValue(key);
   }
 
   private generateUUID(): string {
@@ -24,5 +28,15 @@ export class UrlProcessorService {
 
   private saveCache(key: string, value: string): void {
     this.cacheService.setValue(key, value);
+  }
+
+  private mapUrlToId(url: string): string {
+    const id = this.generateUUID();
+    this.saveCache(id, url);
+    return this.generateUrl(id);
+  }
+
+  private generateUrl(key: string): string {
+    return `http://localhost:3000/url/restore/${key}`;
   }
 }

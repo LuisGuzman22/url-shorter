@@ -15,4 +15,8 @@ export class CacheService {
   async getValue(key: string): Promise<string> {
     return await this.redisClient.get(key);
   }
+
+  async deleteValue(key: string): Promise<void> {
+    await this.redisClient.del(key);
+  }
 }
