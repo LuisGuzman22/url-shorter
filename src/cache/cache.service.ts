@@ -8,8 +8,12 @@ export class CacheService {
     private readonly redisClient: RedisClientType<any, any>,
   ) {}
 
-  async setValue(key: string, value: string): Promise<void> {
-    await this.redisClient.set(key, value);
+  async setValue(key: string, value: string): Promise<boolean> {
+    const data = await this.redisClient.set(key, value);
+    if (data !== 'OK') {
+      return false;
+    }
+    return true;
   }
 
   async getValue(key: string): Promise<string> {

@@ -14,8 +14,8 @@ export class UrlController {
   constructor(private readonly urlService: UrlService) {}
 
   @Post()
-  shortener(@Body() list: any): String[] {
-    return this.urlService.shortener(list.urlList);
+  async shortener(@Body() list: any): Promise<String[]> {
+    return await this.urlService.shortener(list.urlList);
   }
 
   @Get('/restore/:key')

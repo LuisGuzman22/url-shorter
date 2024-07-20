@@ -11,13 +11,13 @@ export class UrlService {
   private readonly logger = new Logger(UrlService.name);
 
   constructor(private readonly urlProcessorService: UrlProcessorService) {}
-  public shortener(urlList: String[]): String[] {
+  public async shortener(urlList: String[]): Promise<String[]> {
     this.logger.log('shortening url list');
     if (!urlList || urlList.length === 0) {
       this.logger.error('urlList is required');
       throw new BadRequestException('urlList is required');
     }
-    return this.urlProcessorService.shortener(urlList);
+    return await this.urlProcessorService.shortener(urlList);
   }
 
   public async restoreUrl(key: string, res: any): Promise<void> {
