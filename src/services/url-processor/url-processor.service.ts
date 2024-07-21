@@ -13,7 +13,10 @@ export class UrlProcessorService {
   public async shortener(urlList: String[]): Promise<String[]> {
     const result = await Promise.all(
       urlList.map(async (url: string) => {
-        return await this.mapUrlToId(url);
+        if (this.validateUrl(url)) {
+          return await this.mapUrlToId(url);
+        }
+        return 'invalid url';
       }),
     );
     return result;
@@ -25,6 +28,15 @@ export class UrlProcessorService {
 
   public deleteUrl(key: string): Promise<void> {
     return this.cacheService.deleteValue(key);
+  }
+
+  private validateUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   private generateUUID(): string {
