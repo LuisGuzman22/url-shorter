@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UuidGeneratorService } from '../uuid-generator/uuid-generator.service';
-import { CacheService } from 'src/cache/cache.service';
+import { CacheService } from '../../cache/cache.service';
 
 @Injectable()
 export class UrlProcessorService {
+  private readonly logger = new Logger(UrlProcessorService.name);
+
   constructor(
     private readonly uuidGeneratorService: UuidGeneratorService,
     private readonly cacheService: CacheService,
@@ -36,10 +38,10 @@ export class UrlProcessorService {
   private async mapUrlToId(url: string): Promise<string> {
     const id = this.generateUUID();
     const registered = await this.saveCache(id, url);
-    console.log('registered', registered);
     if (registered) {
       return this.generateUrl(id);
     } else {
+      this.logger.error('url not processed');
       return 'not processed';
     }
   }

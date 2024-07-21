@@ -4,7 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { UrlProcessorService } from 'src/services/url-processor/url-processor.service';
+import { UrlProcessorService } from '../../services/url-processor/url-processor.service';
 
 @Injectable()
 export class UrlService {
