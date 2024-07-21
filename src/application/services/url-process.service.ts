@@ -1,24 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UuidGeneratorService } from '../uuid-generator/uuid-generator.service';
-import { CacheService } from '../../cache/cache.service';
+import { CreateUrlResponseDto } from '../dto/response/create-url.response.dto';
+import { CacheService } from './cache.service';
+import { UuidGeneratorService } from './uuid-generator.service';
 
 @Injectable()
-export class UrlProcessorService {
-  private readonly logger = new Logger(UrlProcessorService.name);
+export class UrlProcessService {
+  private readonly logger = new Logger(UrlProcessService.name);
 
   constructor(
     private readonly uuidGeneratorService: UuidGeneratorService,
     private readonly cacheService: CacheService,
   ) {}
-  public async shortener(urlList: String[]): Promise<String[]> {
-    const result = await Promise.all(
+  public async shortener(urlList: String[]): Promise<CreateUrlResponseDto[]> {
+    const result = (await Promise.all(
       urlList.map(async (url: string) => {
         if (this.validateUrl(url)) {
-          return await this.mapUrlToId(url);
+          return {
+            shortUrl: await this.mapUrlToId(url),
+            longUrl: url,
+          };
         }
-        return 'invalid url';
+        return {
+          shortUrl: await this.mapUrlToId(url),
+          longUrl: 'invalid url',
+        };
       }),
-    );
+    )) as unknown as CreateUrlResponseDto[];
     return result;
   }
 
@@ -59,6 +66,6 @@ export class UrlProcessorService {
   }
 
   private generateUrl(key: string): string {
-    return `http://localhost:3000/url/restore/${key}`;
+    return `http://localhost:3000/url/${key}`;
   }
 }
