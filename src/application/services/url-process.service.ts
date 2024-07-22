@@ -21,8 +21,8 @@ export class UrlProcessService {
           };
         }
         return {
-          shortUrl: await this.mapUrlToId(url),
-          longUrl: 'invalid url',
+          shortUrl: 'invalid url',
+          longUrl: url,
         };
       }),
     )) as unknown as CreateUrlResponseDto[];
@@ -32,7 +32,6 @@ export class UrlProcessService {
   public restoreUrl(key: string): Promise<string> {
     return this.cacheService.getValue(key);
   }
-
   public deleteUrl(key: string): Promise<void> {
     return this.cacheService.deleteValue(key);
   }

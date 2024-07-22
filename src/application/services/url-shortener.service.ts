@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Inject,
   Logger,
   NotFoundException,
   BadRequestException,
@@ -15,7 +14,7 @@ export class UrlShortenerService {
 
   constructor(private readonly urlProcessService: UrlProcessService) {}
 
-  async shortenUrl(
+  public async shortenUrl(
     createUrlDto: CreateUrlDto,
   ): Promise<CreateUrlResponseDto[]> {
     this.logger.log('shortening url list');
@@ -27,11 +26,10 @@ export class UrlShortenerService {
     return this.urlProcessService.shortener(createUrlDto.urlList);
   }
 
-  async getOriginalUrl(key: string, res: any): Promise<void> {
+  public async getOriginalUrl(key: string, res: any): Promise<void> {
     this.logger.log('restoring url');
-    const longUrl = await this.urlProcessService.restoreUrl(key).then((url) => {
-      return url;
-    });
+    const longUrl = await this.urlProcessService.restoreUrl(key);
+
     if (!longUrl) {
       this.logger.error('key not found');
       throw new NotFoundException('key not found');
@@ -42,5 +40,28 @@ export class UrlShortenerService {
   public async deleteUrl(key: string): Promise<void> {
     this.logger.log('deleting url');
     await this.urlProcessService.deleteUrl(key);
+  }
+
+  public async masiveUpload(file: Express.Multer.File) {
+    this.logger.log('masive upload');
+
+    const lines = file.buffer.toString().split('\n');
+    const urlList = [];
+
+    lines.map((line) => {
+      const urls = line.split(';');
+      urls.map((item) => {
+        urlList.push(this.trimUrl(item));
+      });
+    });
+
+    return this.urlProcessService.shortener(urlList);
+  }
+
+  private trimUrl(url: string): string {
+    const trimmedItem = url.replace(/\r/g, '').trim();
+    if (trimmedItem) {
+      return trimmedItem;
+    }
   }
 }
