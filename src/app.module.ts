@@ -1,25 +1,3 @@
-// @Module({
-//   imports: [
-//     UrlModule,
-//     ServicesModule,
-//     CacheModule,
-//     TypeOrmModule.forRoot({
-//       type: 'postgres',
-//       host: 'localhost',
-//       port: 5432,
-//       username: 'myuser',
-//       password: 'mypassword',
-//       database: 'mydatabase',
-//       entities: [UrlEntity],
-//       synchronize: true,
-//     }),
-//     TypeOrmModule.forFeature([UrlEntity]),
-//   ],
-//   controllers: [AppController],
-//   providers: [AppService],
-// })
-// export class AppModule {}
-
 import { Module } from '@nestjs/common';
 import { UrlShortenerService } from './application/services/url-shortener.service';
 import { UuidGeneratorService } from './application/services/uuid-generator.service';
@@ -27,9 +5,23 @@ import { CacheService } from './application/services/cache.service';
 import { createClient } from 'redis';
 import { UrlController } from './infrastructure/controllers/url.controller';
 import { UrlProcessService } from './application/services/url-process.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisModule } from 'nestjs-redis';
 
 @Module({
-  imports: [],
+  // imports: [
+  //   ConfigModule.forRoot({
+  //     isGlobal: true,
+  //   }),
+  //   RedisModule.forRootAsync({
+  //     imports: [ConfigModule],
+  //     useFactory: async (configService: ConfigService) => ({
+  //       host: configService.get<string>('REDIS_HOST'),
+  //       port: configService.get<number>('REDIS_PORT'),
+  //     }),
+  //     inject: [ConfigService],
+  //   }),
+  // ],
   controllers: [UrlController],
   providers: [
     UrlShortenerService,

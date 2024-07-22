@@ -1,23 +1,17 @@
 services:
   redis:
-    image: 'redis:latest'
-    container_name: 'redis-server'
+    image: 'redis:alpine'
     ports:
       - '6379:6379'
-  postgres:
-    image: postgres:latest
-    container_name: postgres-db
-    environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      # Puedes descomentar esta línea si tienes scripts SQL que quieras ejecutar al inicio
-      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
-volumes:
-  postgres-data:
-# docker exec -it postgres-db psql -U myuser -d mydatabase
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '3000:3000'
+  #   depends_on:
+  #     - redis
+  #   environment:
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
