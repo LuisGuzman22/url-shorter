@@ -51,7 +51,8 @@ export class UrlShortenerService {
     lines.map((line) => {
       const urls = line.split(';');
       urls.map((item) => {
-        urlList.push(this.trimUrl(item));
+        const url = this.trimUrl(item);
+        if (url) urlList.push(url);
       });
     });
 
@@ -60,7 +61,7 @@ export class UrlShortenerService {
 
   private trimUrl(url: string): string {
     const trimmedItem = url.replace(/\r/g, '').trim();
-    if (trimmedItem) {
+    if (!!trimmedItem) {
       return trimmedItem;
     }
   }
