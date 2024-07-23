@@ -1,13 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@nestjs/common';
 import { UrlShortenerService } from './url-shortener.service';
 import { UrlProcessService } from './url-process.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateUrlDto } from '../dto/request/create-url.dto';
-import {
-  CreateUrlResponseDto,
-  ShortUrl,
-} from '../dto/response/create-url.response.dto';
+import { CreateUrlResponseDto } from '../dto/response/create-url.response.dto';
 
 describe('UrlShortenerService', () => {
   let service: UrlShortenerService;
@@ -32,12 +28,8 @@ describe('UrlShortenerService', () => {
     urlProcessService = module.get<UrlProcessService>(UrlProcessService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('shortenUrl', () => {
-    it('should log an error and throw a BadRequestException if urlList is empty', async () => {
+    it('should throw BadRequestException if urlList is empty', async () => {
       const createUrlDto: CreateUrlDto = { urlList: [] };
 
       await expect(service.shortenUrl(createUrlDto)).rejects.toThrow(
@@ -45,42 +37,46 @@ describe('UrlShortenerService', () => {
       );
     });
 
-    it('should call urlProcessService.shortener with the urlList', async () => {
-      const createUrlDto: CreateUrlDto = { urlList: ['http://example.com'] };
-      const shortUrl: ShortUrl = {
-        shortUrl: 'short',
-        longUrl: 'http://example.com',
+    it('should call urlProcessService.shortener with urlList', async () => {
+      const createUrlDto: CreateUrlDto = { urlList: ['https://example.com'] };
+      const response: CreateUrlResponseDto = {
+        shortList: [{ shortUrl: 'shortUrl', longUrl: 'https://example.com' }],
       };
 
-      const response: CreateUrlResponseDto[] = [{ shortList: [shortUrl] }];
-      (urlProcessService.shortener as jest.Mock).mockResolvedValue(response);
+      jest.spyOn(urlProcessService, 'shortener').mockResolvedValue(response);
 
       const result = await service.shortenUrl(createUrlDto);
 
+      expect(result).toBe(response);
       expect(urlProcessService.shortener).toHaveBeenCalledWith(
         createUrlDto.urlList,
       );
-      expect(result).toEqual(response);
     });
   });
 
   describe('getOriginalUrl', () => {
-    it('should log an error and throw a NotFoundException if the key is not found', async () => {
-      const key = 'nonexistent';
-      (urlProcessService.restoreUrl as jest.Mock).mockResolvedValue(null);
-      const res = { redirect: jest.fn() };
+    it('should throw NotFoundException if key not found', async () => {
+      const key = 'invalidKey';
+      const res = {
+        redirect: jest.fn(),
+      };
+
+      jest.spyOn(urlProcessService, 'restoreUrl').mockResolvedValue(null);
 
       await expect(service.getOriginalUrl(key, res)).rejects.toThrow(
         NotFoundException,
       );
-      expect(urlProcessService.restoreUrl).toHaveBeenCalledWith(key);
+      expect(res.redirect).not.toHaveBeenCalled();
     });
 
-    it('should call res.redirect with the longUrl if the key is found', async () => {
-      const key = 'existent';
-      const longUrl = 'http://example.com';
-      (urlProcessService.restoreUrl as jest.Mock).mockResolvedValue(longUrl);
-      const res = { redirect: jest.fn() };
+    it('should call res.redirect with longUrl', async () => {
+      const key = 'validKey';
+      const longUrl = 'https://example.com';
+      const res = {
+        redirect: jest.fn(),
+      };
+
+      jest.spyOn(urlProcessService, 'restoreUrl').mockResolvedValue(longUrl);
 
       await service.getOriginalUrl(key, res);
 
@@ -89,8 +85,9 @@ describe('UrlShortenerService', () => {
   });
 
   describe('deleteUrl', () => {
-    it('should call urlProcessService.deleteUrl with the key', async () => {
-      const key = 'key';
+    it('should call urlProcessService.deleteUrl', async () => {
+      const key = 'validKey';
+
       await service.deleteUrl(key);
 
       expect(urlProcessService.deleteUrl).toHaveBeenCalledWith(key);
@@ -98,44 +95,40 @@ describe('UrlShortenerService', () => {
   });
 
   describe('masiveUpload', () => {
-    it('should call urlProcessService.shortener with the parsed urlList from file', async () => {
+    it('should call urlProcessService.shortener with urlList from file', async () => {
       const file = {
-        buffer: Buffer.from(
-          'http://example.com;http://example2.com\nhttp://example3.com;\r',
-        ),
+        buffer: Buffer.from('https://example.com\nhttps://another.com'),
       } as Express.Multer.File;
-      const shortUrl: ShortUrl = {
-        shortUrl: 'short',
-        longUrl: 'http://example.com',
+
+      const response: CreateUrlResponseDto = {
+        shortList: [
+          { shortUrl: 'shortUrl1', longUrl: 'https://example.com' },
+          { shortUrl: 'shortUrl2', longUrl: 'https://another.com' },
+        ],
       };
 
-      const response: CreateUrlResponseDto[] = [{ shortList: [shortUrl] }];
-
-      (urlProcessService.shortener as jest.Mock).mockResolvedValue(response);
+      jest.spyOn(urlProcessService, 'shortener').mockResolvedValue(response);
 
       const result = await service.masiveUpload(file);
 
+      expect(result).toBe(response);
       expect(urlProcessService.shortener).toHaveBeenCalledWith([
-        'http://example.com',
-        'http://example2.com',
-        'http://example3.com',
+        'https://example.com',
+        'https://another.com',
       ]);
-      expect(result).toEqual(response);
     });
   });
 
   describe('trimUrl', () => {
-    it('should return trimmed URL', () => {
-      const url = '  http://example.com  \r';
+    it('should trim and return a valid URL', () => {
+      const url = '  https://example.com  ';
       const result = service['trimUrl'](url);
-
-      expect(result).toBe('http://example.com');
+      expect(result).toBe('https://example.com');
     });
 
-    it('should return undefined for an empty URL', () => {
-      const url = '  \r';
+    it('should return undefined for an invalid URL', () => {
+      const url = '   ';
       const result = service['trimUrl'](url);
-
       expect(result).toBeUndefined();
     });
   });

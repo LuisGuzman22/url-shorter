@@ -36,7 +36,7 @@ export class UrlController {
   @ApiResponse({ status: 400, description: 'Invalid input.' })
   async create(
     @Body() createUrlDto: CreateUrlDto,
-  ): Promise<CreateUrlResponseDto[]> {
+  ): Promise<CreateUrlResponseDto> {
     return await this.urlShortenerService.shortenUrl(createUrlDto);
   }
 

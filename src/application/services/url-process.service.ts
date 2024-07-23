@@ -1,7 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateUrlResponseDto } from '../dto/response/create-url.response.dto';
-import { CacheService } from './cache.service';
 import { UuidGeneratorService } from './uuid-generator.service';
+import { CacheService } from './cache.service';
+import {
+  ACTION_CREATE,
+  INVALID_URL,
+  ACTION_ACCESS,
+  ACTION_DELETE,
+  NOT_PROCESSED,
+} from '../../constants/index';
+import { RegistrationService } from '../../core/services/registration-service/registration-service.service';
+import {
+  CreateUrlResponseDto,
+  ShortUrl,
+} from '../dto/response/create-url.response.dto';
 
 @Injectable()
 export class UrlProcessService {
@@ -10,30 +21,59 @@ export class UrlProcessService {
   constructor(
     private readonly uuidGeneratorService: UuidGeneratorService,
     private readonly cacheService: CacheService,
+    private readonly registrationService: RegistrationService,
   ) {}
-  public async shortener(urlList: String[]): Promise<CreateUrlResponseDto[]> {
-    const result = (await Promise.all(
-      urlList.map(async (url: string) => {
-        if (this.validateUrl(url)) {
-          return {
-            shortUrl: await this.mapUrlToId(url),
-            longUrl: url,
-          };
-        }
-        return {
-          shortUrl: 'invalid url',
-          longUrl: url,
-        };
-      }),
-    )) as unknown as CreateUrlResponseDto[];
-    return result;
+
+  public async shortener(urlList: string[]): Promise<CreateUrlResponseDto> {
+    const shortList = await Promise.all(
+      urlList.map((url) => this.processUrl(url)),
+    );
+    return { shortList };
   }
 
-  public restoreUrl(key: string): Promise<string> {
-    return this.cacheService.getValue(key);
+  private async processUrl(url: string): Promise<ShortUrl> {
+    if (this.validateUrl(url)) {
+      const id = await this.mapUrlToId(url);
+      await this.registerUrl({
+        shortUrl: id,
+        originalUrl: url,
+        action: ACTION_CREATE,
+      });
+      return this.createUrlResponse(id, url);
+    }
+    return this.createInvalidUrlResponse(url);
   }
-  public deleteUrl(key: string): Promise<void> {
-    return this.cacheService.deleteValue(key);
+
+  private createUrlResponse(shortUrl: string, longUrl: string): ShortUrl {
+    return {
+      shortUrl,
+      longUrl,
+    };
+  }
+
+  private createInvalidUrlResponse(longUrl: string): ShortUrl {
+    return {
+      shortUrl: INVALID_URL,
+      longUrl,
+    };
+  }
+
+  public async restoreUrl(key: string): Promise<string> {
+    const originalUrl = await this.cacheService.getValue(key);
+    await this.registerUrl({
+      shortUrl: key,
+      originalUrl: originalUrl,
+      action: ACTION_ACCESS,
+    });
+    return originalUrl;
+  }
+
+  public async deleteUrl(key: string): Promise<void> {
+    await this.registerUrl({
+      shortUrl: key,
+      action: ACTION_DELETE,
+    });
+    await this.cacheService.deleteValue(key);
   }
 
   private validateUrl(url: string): boolean {
@@ -43,6 +83,14 @@ export class UrlProcessService {
     } catch (error) {
       return false;
     }
+  }
+
+  private async registerUrl(registerData: {
+    shortUrl: string;
+    originalUrl?: string;
+    action: string;
+  }): Promise<void> {
+    await this.registrationService.registerUrl(registerData);
   }
 
   private generateUUID(): string {
@@ -60,7 +108,7 @@ export class UrlProcessService {
       return this.generateUrl(id);
     } else {
       this.logger.error('url not processed');
-      return 'not processed';
+      return NOT_PROCESSED;
     }
   }
 

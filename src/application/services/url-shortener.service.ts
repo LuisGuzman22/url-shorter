@@ -16,7 +16,7 @@ export class UrlShortenerService {
 
   public async shortenUrl(
     createUrlDto: CreateUrlDto,
-  ): Promise<CreateUrlResponseDto[]> {
+  ): Promise<CreateUrlResponseDto> {
     this.logger.log('shortening url list');
     if (!createUrlDto.urlList || createUrlDto.urlList.length === 0) {
       this.logger.error('urlList is required');

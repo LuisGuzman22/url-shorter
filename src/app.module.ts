@@ -7,8 +7,11 @@ import { UrlController } from './infrastructure/controllers/url.controller';
 import { UrlProcessService } from './application/services/url-process.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from 'nestjs-redis';
+import { RegistrationService } from './core/services/registration-service/registration-service.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
+  imports: [HttpModule],
   // imports: [
   //   ConfigModule.forRoot({
   //     isGlobal: true,
@@ -38,6 +41,7 @@ import { RedisModule } from 'nestjs-redis';
         return client;
       },
     },
+    RegistrationService,
   ],
 })
 export class AppModule {}
