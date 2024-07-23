@@ -1,23 +1,23 @@
-# Usa una imagen oficial de Node.js como imagen base
-FROM node:18-alpine
+# Utiliza una imagen base de Node.js
+FROM node:18
 
 # Establece el directorio de trabajo en /app
 WORKDIR /app
 
-# Copia el package.json y el package-lock.json al contenedor de Docker
+# Copia el package.json y package-lock.json (o yarn.lock) al contenedor
 COPY package*.json ./
 
-# Instala las dependencias del proyecto
+# Instala las dependencias
 RUN npm install
 
-# Copia el resto del código de la aplicación al contenedor de Docker
+# Copia el resto del código de la aplicación al contenedor
 COPY . .
 
-# Compila la aplicación NestJS
+# Compila la aplicación
 RUN npm run build
 
-# Expone el puerto en el que la aplicación se ejecutará
+# Expone el puerto en el que se ejecutará la aplicación
 EXPOSE 3000
 
-# Comando para ejecutar la aplicación
+# Define el comando para ejecutar la aplicación
 CMD ["npm", "run", "start:dev"]

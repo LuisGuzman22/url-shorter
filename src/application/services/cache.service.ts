@@ -1,12 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { RedisClientType } from 'redis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { Injectable } from '@nestjs/common';
+import Redis from 'ioredis';
 
 @Injectable()
 export class CacheService {
-  constructor(
-    @Inject('REDIS_CLIENT')
-    private readonly redisClient: RedisClientType<any, any>,
-  ) {}
+  constructor(@InjectRedis() private readonly redisClient: Redis) {}
 
   async setValue(key: string, value: string): Promise<boolean> {
     const data = await this.redisClient.set(key, value);
