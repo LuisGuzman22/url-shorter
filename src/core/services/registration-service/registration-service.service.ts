@@ -13,7 +13,7 @@ export class RegistrationService {
     try {
       // this.counter++;
       // this.logger.log(`counter: ${this.counter}`);
-      const url = `http://localhost:3001/url`;
+      const url = `${process.env.PROCESS_QUEUE_URL}/url`;
 
       await axios.post(url, data);
     } catch (error) {
